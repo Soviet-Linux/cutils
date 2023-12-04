@@ -63,10 +63,10 @@ int pmkdir (const char *dir)
     {
         case 0:
             return mkdir(dir,0777); 
-        case -1:
+        case 1:
             if (pmkdir(parent_path) != 0) return -1;
             return mkdir(dir,0777);
-        case -2:
+        case 2:
             return -2;
         
     }
