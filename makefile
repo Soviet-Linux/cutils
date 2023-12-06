@@ -36,8 +36,9 @@ $(LIBRARY): $(OBJECTS)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $< -D MEMCHECK=$(MEMCHECK)
 
-test:
+check:
 	$(CC) $(CFLAGS) -o $(BIN_DIR)/test test.c $(LIBRARY).a
+	bin/test
 
 clean:
 	rm -f $(OBJ_DIR)/*.o
