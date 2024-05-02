@@ -76,6 +76,12 @@ int pmkdir (const char *dir)
 
 int mvsp(char* old_path,char* new_path)
 {
+    struct stat path_stat;
+    stat(old_path, &path_stat);
+    if (S_ISLNK(path_stat.st_mode)) {
+        return mvlink(old_path, new_path);
+    }
+
     char* parent_path = calloc(strlen(new_path)+1,sizeof(char));
     strncpy(parent_path,new_path,strrchr(new_path, '/')-new_path);
 
@@ -94,3 +100,24 @@ int mvsp(char* old_path,char* new_path)
     return rename(old_path,new_path);
 }
 
+int rmrf(char *path) {
+    // use ls and rm to remove all files in a directory
+    char** list = ls(path);
+    if (list == NULL) return -1;
+    for (int i = 0; list[i] != NULL; i++)
+    {
+        char* file = list[i];
+        char* full_path = calloc(strlen(path)+strlen(file)+2,sizeof(char));
+        sprintf(full_path,"%s/%s",path,file);
+        if (isdir(full_path) == 0)
+        {
+            if (rmrf(full_path) != 0) return -1;
+        }
+        else
+        {
+            if (remove(full_path) != 0) return -1;
+        }
+        free(full_path);
+    }
+    return rmdir(path);
+}
