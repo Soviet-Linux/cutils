@@ -30,28 +30,6 @@ char** ls(char* path)
     return list;
 }
 
-
-int xisdir (const char *d)
-{
-
-    DIR* dirptr;
-
-    if (access ( d, F_OK ) == 0 ) {
-        // file exists
-        if ((dirptr = opendir (d)) != NULL) {
-            closedir (dirptr); /* d exists and is a directory */
-            return 0;
-        } else {
-            return 2; /* d exists but is not a directory */
-        }
-    } else {
-        return 1;     /* d does not exist */
-    }
-
-}
-
-
-
 int pmkdir (const char *dir)
 {
     char parent_path[strlen(dir)];
@@ -130,3 +108,24 @@ int rmrf(char *path) {
     }
     return rmdir(path);
 }
+
+int xisdir (const char *d)
+{
+
+    DIR* dirptr;
+
+    if (access ( d, F_OK ) == 0 ) {
+        // file exists
+        if ((dirptr = opendir (d)) != NULL) {
+            closedir (dirptr); /* d exists and is a directory */
+            return 0;
+        } else {
+            return 2; /* d exists but is not a directory */
+        }
+    } else {
+        return 1;     /* d does not exist */
+    }
+
+}
+
+
