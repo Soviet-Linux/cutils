@@ -77,12 +77,19 @@ int pmkdir (const char *dir)
 
 }
 
+int mvlink(char* old_path,char* new_path)
+{
+    char* link_path = calloc(512,sizeof(char));
+    readlink(old_path,link_path,512);
+    return symlink(link_path,new_path);
+}
+
 int mvsp(char* old_path,char* new_path)
 {
     struct stat path_stat;
     stat(old_path, &path_stat);
     if (S_ISLNK(path_stat.st_mode)) {
-        return mvlink(old_path, new_path);
+        mvlink(old_path,new_path);
     }
 
     char* parent_path = calloc(strlen(new_path)+1,sizeof(char));
