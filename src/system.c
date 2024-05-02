@@ -5,6 +5,8 @@
 #include "dirent.h"
 #include "sys/stat.h"
 
+#include "cutils.h"
+
 char** ls(char* path)
 {
     DIR *d;
