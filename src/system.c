@@ -50,8 +50,7 @@ int xisdir (const char *d)
 
 }
 
-// for some reason some versions of libspm use isdir instead of xisdir
-#define isdir xisdir
+
 
 int pmkdir (const char *dir)
 {

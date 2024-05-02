@@ -26,7 +26,7 @@ long rdfile(const char* filePath,char** buffer)
     return length;
 }
 
-int wrfile(const char* filePath,char* buffer,long size)
+int wrnfile(const char* filePath,char* buffer,long size)
 {
     FILE *fp;
     fp = fopen(filePath , "wb" );
