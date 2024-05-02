@@ -5,7 +5,24 @@
 #include "dirent.h"
 #include "sys/stat.h"
 
-#include "../cutils.h"
+int isdir (const char *d)
+{
+
+    DIR* dirptr;
+
+    if (access ( d, F_OK ) == 0 ) {
+        // file exists
+        if ((dirptr = opendir (d)) != NULL) {
+            closedir (dirptr); /* d exists and is a directory */
+            return 0;
+        } else {
+            return 2; /* d exists but is not a directory */
+        }
+    } else {
+        return 1;     /* d does not exist */
+    }
+
+}
 
 char** ls(char* path)
 {
@@ -36,9 +53,9 @@ int pmkdir (const char *dir)
 {
     char parent_path[strlen(dir)];
     strncpy(parent_path,dir,strrchr(dir, '/')-dir);
-
+    parent_path[strrchr(dir, '/')-dir] = '\0';
     
-    //printf("Parent path : %s\n",parent_path);
+    printf("Parent path : %s\n",parent_path);
 
     // if parent dir does not exist, create it
     switch (isdir(parent_path))
@@ -56,21 +73,70 @@ int pmkdir (const char *dir)
 
 }
 
+#include <string.h>
+#include <stdlib.h>
+
+char* relpath(char* path, char* cwd) {
+    char* rel = calloc(512, sizeof(char));
+    char* p = path;
+    char* c = cwd;
+    int count = 0;
+
+    // Find common ancestor
+    while (*p && *c && *p == *c) {
+        p++;
+        c++;
+    }
+
+    // If the path is a subdirectory of the cwd or the same as cwd
+    if (*c == '\0' && (*p == '/' || *p == '\0')) {
+        if (*p == '/') {
+            p++;
+        }
+        sprintf(rel, "./%s", p);
+        return rel;
+    }
+
+    // Count the number of directories we have to go up to reach the common ancestor
+    while (*c) {
+        if (*c == '/') {
+            count++;
+        }
+        c++;
+    }
+
+    // Add the necessary number of "../"
+    for (int i = 0; i < count; i++) {
+        strcat(rel, "../");
+    }
+
+    // Add the subpath from the common ancestor to the path
+    if (*p == '/') {
+        p++;
+    }
+    strcat(rel, p);
+
+    return rel;
+}
+
+
 int mvlink(char* old_path,char* new_path)
 {
     char* link_path = calloc(512,sizeof(char));
-    readlink(old_path,link_path,512);
-    return symlink(link_path,new_path);
+    int r = readlink(old_path,link_path,512);
+    if (r == -1) return -1;
+    if (r >= 512) return -2;
+    // convert to relative path
+    char* parent_path = calloc(strlen(old_path)+1,sizeof(char));
+    strncpy(parent_path,old_path,strrchr(old_path, '/')-old_path);
+    char* rel = relpath(link_path, parent_path);
+
+    printf("Linking %s to %s\n",rel,new_path);
+    return symlink(rel,new_path);
 }
 
 int mvsp(char* old_path,char* new_path)
 {
-    struct stat path_stat;
-    stat(old_path, &path_stat);
-    if (S_ISLNK(path_stat.st_mode)) {
-        mvlink(old_path,new_path);
-    }
-
     char* parent_path = calloc(strlen(new_path)+1,sizeof(char));
     strncpy(parent_path,new_path,strrchr(new_path, '/')-new_path);
 
@@ -80,54 +146,25 @@ int mvsp(char* old_path,char* new_path)
             if (pmkdir(parent_path) != 0) return -1;
             break;
         case 2:
+            //printf("Parent path is not a directory\n");
             return -2;
         case 0:
             break;
     }
     free(parent_path);
-    // move file
-    return rename(old_path,new_path);
-}
-
-int rmrf(char *path) {
-    // use ls and rm to remove all files in a directory
-    char** list = ls(path);
-    if (list == NULL) return -1;
-    for (int i = 0; list[i] != NULL; i++)
-    {
-        char* file = list[i];
-        char* full_path = calloc(strlen(path)+strlen(file)+2,sizeof(char));
-        sprintf(full_path,"%s/%s",path,file);
-        if (isdir(full_path) == 0)
-        {
-            if (rmrf(full_path) != 0) return -1;
-        }
-        else
-        {
-            if (remove(full_path) != 0) return -1;
-        }
-        free(full_path);
+    
+    struct stat path_stat;
+    if (lstat(old_path, &path_stat) != 0) {
+        printf("Failed to get file status\n");
+        return -3;
     }
-    return rmdir(path);
-}
-
-int xisdir (const char *d)
-{
-
-    DIR* dirptr;
-
-    if (access ( d, F_OK ) == 0 ) {
-        // file exists
-        if ((dirptr = opendir (d)) != NULL) {
-            closedir (dirptr); /* d exists and is a directory */
-            return 0;
-        } else {
-            return 2; /* d exists but is not a directory */
-        }
-    } else {
-        return 1;     /* d does not exist */
+    if (S_ISLNK(path_stat.st_mode)) {
+        printf("Moving link %s to %s\n",old_path,new_path);
+        return mvlink(old_path,new_path);
+    } else  {
+        printf("Moving file %s to %s\n",old_path,new_path);
+        return rename(old_path,new_path);
     }
 
 }
-
 

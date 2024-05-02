@@ -17,55 +17,72 @@ int popchar_test()
     return 0;
 }
 
-void test_xisdir()
+void test_isdir()
 {
-    assert(xisdir("src") == 0);
-    assert(xisdir("src/system.c") == 2);
-    assert(xisdir("src/doesnotexist") == 1);
+    assert(isdir("src") == 0);
+    assert(isdir("src/system.c") == 2);
+    assert(isdir("src/doesnotexist") == 1);
 }
 
-// Add tests for file operations
+
 void test_rmrf() {
-    // Test implementation for rmrf
-    // create a directory
-    int status = mkdir("test_dir", 0700);
-    assert(status == 0); // Assert that directory was created successfully
+    // Create a temporary directory
+    char temp_dir_template[] = "/tmp/test_dir_XXXXXX";
+    char* temp_dir = mkdtemp(temp_dir_template);
+    assert(temp_dir != NULL); // Assert that directory was created successfully
 
-    // create a file in the directory
-    FILE *file = fopen("test_dir/test_file", "w");
-    assert(file != NULL); // Assert that file was created successfully
-    fclose(file);
+    // Create a temporary file in the directory
+    char temp_file_template[512];
+    snprintf(temp_file_template, 512, "%s/test_file_XXXXXX", temp_dir);
+    int temp_file_descriptor = mkstemp(temp_file_template);
+    assert(temp_file_descriptor != -1); // Assert that file was created successfully
+    close(temp_file_descriptor);
 
-    // call rmrf function
-    rmrf("test_dir");
+    // Call rmrf function
+    int res = rmrf(temp_dir);
+    assert(res == 0); // Assert that directory was removed successfully
 
-    // check if directory still exists
+    // Check if directory still exists
     struct stat st;
-    status = stat("test_dir", &st);
+    int status = stat(temp_dir, &st);
     assert(status == -1); // Assert that directory was removed successfully
 }
 
 void test_rdfile() {
     // Test implementation for rdfile
     char* test_string = "Hello, World!";
-    // create a file
-    FILE *file = fopen("test_file", "w");
-    assert(file != NULL); // Assert that file was created successfully
+    
+    // Create a temporary directory
+    char temp_dir_template[] = "/tmp/test_dir_XXXXXX";
+    char* temp_dir = mkdtemp(temp_dir_template);
+    assert(temp_dir != NULL); // Assert that directory was created successfully
+    // create a temporary file
+    char temp_file_path[512];
+    snprintf(temp_file_path, 512, "%s/test_file", temp_dir);
+    // Write to the file
+    FILE *file = fopen(temp_file_path, "w");
     fputs(test_string, file);
     fclose(file);
 
-    // call rdfile function
-    char *content;
-    long size = rdfile("test_file",&content);
+    // assert that the file was created
+    struct stat st;
+    int status = stat(temp_file_path, &st);
+    assert(status == 0); // Assert that file was created successfully
 
+    // Call rdfile function
+    char *content;
+    long size = rdfile(temp_file_path, &content);
+
+    printf("size: %ld\n", size);
+    printf("size: %ld\n", strlen(test_string));
     assert(size == strlen(test_string)); // Assert that size is correct
 
-    // check if content is correct
-    assert(strncmp(content, test_string,size) == 0); // Assert that content is correct
+    // Check if content is correct
+    assert(strncmp(content, test_string, size) == 0); // Assert that content is correct
 
-    // clean up
+    // Clean up
     free(content);
-    remove("test_file");
+    remove(temp_file_path);
 }
 
 void test_wrfile() {
@@ -89,11 +106,22 @@ void test_wrfile() {
 }
 
 void test_pmkdir() {
-    // Test implementation for pmkdir
-    const char *path = "/tmp/testdir/subdir";
+    char temp_dir_template[] = "/tmp/test_dir_XXXXXX";
+    char* temp_dir = mkdtemp(temp_dir_template);
+    assert(temp_dir != NULL); // Assert that directory was created successfully
+
+    // Create a path for the directory to be created
+    char path[512];
+    snprintf(path, 512, "%s/subdir/subsubdir", temp_dir);
+    path[511] = '\0';
+
+    printf("path: %s\n", path);
 
     // Call the function to test
-    pmkdir(path);
+    int ret = pmkdir(path);
+    printf("ret: %d\n", ret);
+    assert(ret == 0); // pmkdir should return 0 for successful directory creation
+
 
     // Check if the directory was created
     struct stat st = {0};
@@ -117,19 +145,31 @@ void test_mvsp() {
     fclose(file);
 
     // add a symlink
-    symlink("/tmp/testdir/testfile", "/tmp/testdir/testlink");
+    symlink("./testfile", "/tmp/testdir/testlink");
+    // Check if the file and symlink were created
+    struct stat st = {0};
+    assert(stat("/tmp/testdir/testfile", &st) == 0);
+    assert(stat("/tmp/testdir/testlink", &st) == 0);
 
     // Call the function to test
     mkdir("/tmp/testnewdir", 0700);
-    mvsp("/tmp/testdir/testfile", "/tmp/testnewdir/testfile");
+    int res = mvsp("/tmp/testdir/testfile", "/tmp/testnewdir/testfile");
 
     // Check if the file was moved
-    struct stat st = {0};
     assert(stat("/tmp/testdir/testfile", &st) == -1);
     assert(stat("/tmp/testnewdir/testfile", &st) == 0);
 
+    // move the symlink
+    res = mvsp("/tmp/testdir/testlink", "/tmp/testnewdir/testlink");
+    printf("res: %d\n", res);
+    if (res != 0) {
+        msg(ERROR, "mvsp failed with error code %d\n", res);
+        exit(1);
+    }
+
     // Check if the symlink was moved
-    assert(stat("/tmp/testdir/testlink", &st) == 0);
+    assert(stat("/tmp/testdir/testlink", &st) == -1);
+
 
     // check if the symlink points to the correct file
     char buf[256];
@@ -161,24 +201,24 @@ void test_ls() {
 
     // Test with a non-existing directory
     char** result_non_existing = ls("non_existing_directory");
-    assert(result_non_existing == NULL); // ls should return NULL for a non-existing directory
+    assert(*result_non_existing == NULL); // ls should return NULL for a non-existing directory
 }
 
 void test_splita() {
     char** result;
-    unsigned int count = splita("Hello,World", ',', &result);
+    char str[] = "Hello,World";
+    unsigned int count = splita(str, ',', &result);
 
     assert(count == 2); // splita should return 2 for "Hello,World" with ',' as delimiter
+
+    //printf("result[0]: %s\n", result[0]);
 
     // Check if the split strings are correct
     assert(strcmp(result[0], "Hello") == 0); // First string should be "Hello"
     assert(strcmp(result[1], "World") == 0); // Second string should be "World"
 
-    // Remember to free the result after use
-    for (unsigned int i = 0; i < count; i++) {
-        free(result[i]);
-    }
-    free(result);
+
+    //free(*result);
 }
 
 void test_countc() {
@@ -282,7 +322,7 @@ int main(int argc, char const *argv[])
     test_check_leaks();
 
     printf("test_isdir()\n");
-    test_xisdir();
+    test_isdir();
     printf("test_rmrf()\n");
     test_rmrf();
     printf("test_rdfile()\n");

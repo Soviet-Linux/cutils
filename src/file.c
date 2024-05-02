@@ -7,14 +7,17 @@ long rdfile(const char* filePath,char** buffer)
     (*buffer) = 0;
     long length;
     FILE* fp = fopen (filePath, "rb");
-    if (!fp) return -1;
+    if (!fp) {
+        perror(filePath);
+        return -1;
+    }
 
     fseek (fp, 0, SEEK_END);
     length = ftell(fp);
     fseek (fp, 0, SEEK_SET);
     
     (*buffer) = calloc(length+1,sizeof(char));
-    if ((*buffer)) {
+    if (!(*buffer)) {    
         fclose (fp);
         return -1;
     }

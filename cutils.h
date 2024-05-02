@@ -47,9 +47,7 @@ int wrnfile(const char* filePath,char* buffer,long size);
         * 1 - exists
         * 2 - Not a directory
 */
-int xisdir (const char *d);
-#define isdir(d) xisdir(d)
-// for some reason some versions of libspm use isdir instead of xisdir
+int isdir (const char *d);
 
 // create dir recursivelty (similar to mkdir -p)
 int pmkdir (const char *dir);
