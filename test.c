@@ -17,11 +17,11 @@ int popchar_test()
     return 0;
 }
 
-void test_isdir()
+void test_xisdir()
 {
-    assert(isdir("src") == 0);
-    assert(isdir("src/system.c") == 2);
-    assert(isdir("src/doesnotexist") == 1);
+    assert(xisdir("src") == 0);
+    assert(xisdir("src/system.c") == 2);
+    assert(xisdir("src/doesnotexist") == 1);
 }
 
 // Add tests for file operations
@@ -282,7 +282,7 @@ int main(int argc, char const *argv[])
     test_check_leaks();
 
     printf("test_isdir()\n");
-    test_isdir();
+    test_xisdir();
     printf("test_rmrf()\n");
     test_rmrf();
     printf("test_rdfile()\n");

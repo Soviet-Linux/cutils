@@ -31,7 +31,7 @@ char** ls(char* path)
 }
 
 
-int isdir (const char *d)
+int xisdir (const char *d)
 {
 
     DIR* dirptr;
@@ -49,6 +49,9 @@ int isdir (const char *d)
     }
 
 }
+
+// for some reason some versions of libspm use isdir instead of xisdir
+#define isdir xisdir
 
 int pmkdir (const char *dir)
 {

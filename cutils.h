@@ -65,6 +65,7 @@ Functions :
  * popcharn - Remove a character from a string (with a size limit)
  * splita - Split a string into an array of strings
  * countc - Count the number of occurences of a char in a string
+ * strinarr - Check if a string is in an array of strings
 */
 
 #define popcharn(str,pos,s_size) if (pos < s_size) { memmove(&str[pos], &str[pos + 1], s_size - pos - 1); str[s_size-1] = '\0'; }
@@ -75,6 +76,9 @@ unsigned int splita (char* string,char delim,char*** dest);
 
 // to count the number of occurences of a char in a string
 unsigned int countc(const char* string,char c);
+
+// check if a string is in an array of strings
+int strinarr( char* val, char** arr,long arrsize);
 
 /*
 Logging and debug utils
