@@ -97,7 +97,9 @@ char* relpath(char* path, char* cwd) {
         return rel;
     }
 
-    // Count the number of directories we have to go up to reach the common ancestor
+    // Count 1 + the number of directories we have to go up to reach the common ancestor
+    count++;
+
     while (*c) {
         if (*c == '/') {
             count++;
@@ -120,22 +122,37 @@ char* relpath(char* path, char* cwd) {
 }
 
 
-int mvlink(char* old_path,char* new_path)
+int mvlink(char* old_path,char* new_path, char* root)
 {
     char* link_path = calloc(512,sizeof(char));
     int r = readlink(old_path,link_path,512);
     if (r == -1) return -1;
     if (r >= 512) return -2;
-    // convert to relative path
-    char* parent_path = calloc(strlen(old_path)+1,sizeof(char));
-    strncpy(parent_path,old_path,strrchr(old_path, '/')-old_path);
-    char* rel = relpath(link_path, parent_path);
 
-    printf("Linking %s to %s\n",rel,new_path);
-    return symlink(rel,new_path);
+    if(link_path[0] != '/')
+    {
+        return symlink(link_path,new_path);
+    }
+    else
+    {
+        // convert to relative path
+        char* parent_path = calloc(strlen(old_path)+1,sizeof(char));
+        strncpy(parent_path,old_path,strrchr(old_path, '/')-old_path);
+        
+        if((root != NULL) && strstr(link_path, root))
+        {
+            char* rel = relpath(link_path, parent_path);
+            printf("Linking %s to %s\n",rel,new_path);
+            return symlink(rel,new_path);
+        }
+        else
+        {
+            return symlink(link_path,new_path);
+        }
+    }
 }
 
-int mvsp(char* old_path,char* new_path)
+int mvsp(char* old_path,char* new_path, char* root)
 {
     char* parent_path = calloc(strlen(new_path)+1,sizeof(char));
     strncpy(parent_path,new_path,strrchr(new_path, '/')-new_path);
@@ -160,7 +177,7 @@ int mvsp(char* old_path,char* new_path)
     }
     if (S_ISLNK(path_stat.st_mode)) {
         printf("Moving link %s to %s\n",old_path,new_path);
-        return mvlink(old_path,new_path);
+        return mvlink(old_path,new_path,root);
     } else  {
         printf("Moving file %s to %s\n",old_path,new_path);
         return rename(old_path,new_path);
