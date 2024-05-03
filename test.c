@@ -11,9 +11,9 @@
 int popchar_test()
 {
     char str[] = "Hello World";
-    printf("%s\n",str);
     popchar(str,6);
-    printf("%s\n",str);
+    assert(strcmp(str,"Hello orld") == 0);
+    
     return 0;
 }
 
@@ -72,9 +72,7 @@ void test_rdfile() {
     // Call rdfile function
     char *content;
     long size = rdfile(temp_file_path, &content);
-
-    printf("size: %ld\n", size);
-    printf("size: %ld\n", strlen(test_string));
+    assert(size != -1); // Assert that file was read successfully
     assert(size == strlen(test_string)); // Assert that size is correct
 
     // Check if content is correct
@@ -115,11 +113,9 @@ void test_pmkdir() {
     snprintf(path, 512, "%s/subdir/subsubdir", temp_dir);
     path[511] = '\0';
 
-    printf("path: %s\n", path);
 
     // Call the function to test
     int ret = pmkdir(path);
-    printf("ret: %d\n", ret);
     assert(ret == 0); // pmkdir should return 0 for successful directory creation
 
 
@@ -145,8 +141,9 @@ void test_mvsp() {
     // Write some content to the file
     fputs("Hello, World!", file);
     fclose(file);
-    assert(stat(testfile_path, &st) == 0);
 
+    struct stat st;
+    assert(stat(testfile_path, &st) == 0);
 
     // Create a new directory
     char temp_newdir_template[] = "/tmp/test_newdir_XXXXXX";
@@ -287,43 +284,43 @@ void test_check_leaks()
 
 int main(int argc, char const *argv[])
 {
-    printf("Running tests...\n");
-    printf("popchar_test()\n");
+    msg(INFO, "Running tests");
+    msg(INFO, "test_popchar()");
     popchar_test();
-    printf("test_dbg_malloc()\n");
+    msg(INFO, "test_dbg_malloc()");
     test_dbg_malloc();
-    printf("test_dbg_calloc()\n");
+    msg(INFO, "test_dbg_calloc()");
     test_dbg_calloc();
-    printf("test_dbg_realloc()\n");
+    msg(INFO, "test_dbg_realloc()");
     test_dbg_realloc();
-    printf("test_dbg_strdup()\n");
+    msg(INFO, "test_dbg_strdup()");
     test_dbg_strdup();
-    printf("test_dbg_free()\n");
+    msg(INFO, "test_dbg_free()");
     test_dbg_free();
-    printf("test_check_leaks()\n");
+    msg(INFO, "test_check_leaks()");
     test_check_leaks();
 
-    printf("test_isdir()\n");
+    msg(INFO, "test_isdir()");
     test_isdir();
-    printf("test_rmrf()\n");
+    msg(INFO, "test_rmrf()");
     test_rmrf();
-    printf("test_rdfile()\n");
+    msg(INFO, "test_rdfile()");
     test_rdfile();
-    printf("test_wrfile()\n");
+    msg(INFO, "test_wrfile()");
     test_wrfile();
-    printf("test_pmkdir()\n");
+    msg(INFO, "test_pmkdir()");
     test_pmkdir();
-    printf("test_mvsp()\n");
+    msg(INFO, "test_mvsp()");
     test_mvsp();
-    printf("test_ls()\n");
+    msg(INFO, "test_ls()");
     test_ls();
-    printf("test_splita()\n");
+    msg(INFO, "test_splita()");
     test_splita();
-    printf("test_countc()\n");
+    msg(INFO, "test_countc()");
     test_countc();
-    printf("test_strinarr()\n");
+    msg(INFO, "test_strinarr()");
     test_strinarr();
 
-    printf("All tests passed!\n");
+    msg(INFO, "All tests passed!");
     return 0;
 }

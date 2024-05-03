@@ -5,6 +5,8 @@
 #include "dirent.h"
 #include "sys/stat.h"
 
+#include "../cutils.h"
+
 int isdir (const char *d)
 {
 
@@ -54,8 +56,6 @@ int pmkdir (const char *dir)
     char parent_path[strlen(dir)];
     strncpy(parent_path,dir,strrchr(dir, '/')-dir);
     parent_path[strrchr(dir, '/')-dir] = '\0';
-    
-    printf("Parent path : %s\n",parent_path);
 
     // if parent dir does not exist, create it
     switch (isdir(parent_path))
@@ -91,7 +91,6 @@ int mvsp(char* old_path,char* new_path)
             break;
     }
     free(parent_path);
-    printf("Moving file %s to %s\n",old_path,new_path);
     
     if (rename(old_path,new_path) != 0) {
         // check if it's a link
@@ -102,8 +101,7 @@ int mvsp(char* old_path,char* new_path)
                 return -1;
             }
         }
-    } else {
-        return 0;
     }
+    return 0;
 }
 
