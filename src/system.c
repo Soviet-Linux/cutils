@@ -73,67 +73,6 @@ int pmkdir (const char *dir)
 
 }
 
-#include <string.h>
-#include <stdlib.h>
-
-char* relpath(char* path, char* cwd) {
-    char* rel = calloc(512, sizeof(char));
-    char* p = path;
-    char* c = cwd;
-    int count = 0;
-
-    // Find common ancestor
-    while (*p && *c && *p == *c) {
-        p++;
-        c++;
-    }
-
-    // If the path is a subdirectory of the cwd or the same as cwd
-    if (*c == '\0' && (*p == '/' || *p == '\0')) {
-        if (*p == '/') {
-            p++;
-        }
-        sprintf(rel, "./%s", p);
-        return rel;
-    }
-
-    // Count the number of directories we have to go up to reach the common ancestor
-    while (*c) {
-        if (*c == '/') {
-            count++;
-        }
-        c++;
-    }
-
-    // Add the necessary number of "../"
-    for (int i = 0; i < count; i++) {
-        strcat(rel, "../");
-    }
-
-    // Add the subpath from the common ancestor to the path
-    if (*p == '/') {
-        p++;
-    }
-    strcat(rel, p);
-
-    return rel;
-}
-
-
-int mvlink(char* old_path,char* new_path)
-{
-    char* link_path = calloc(512,sizeof(char));
-    int r = readlink(old_path,link_path,512);
-    if (r == -1) return -1;
-    if (r >= 512) return -2;
-    // convert to relative path
-    char* parent_path = calloc(strlen(old_path)+1,sizeof(char));
-    strncpy(parent_path,old_path,strrchr(old_path, '/')-old_path);
-    char* rel = relpath(link_path, parent_path);
-
-    printf("Linking %s to %s\n",rel,new_path);
-    return symlink(rel,new_path);
-}
 
 int mvsp(char* old_path,char* new_path)
 {
@@ -152,19 +91,19 @@ int mvsp(char* old_path,char* new_path)
             break;
     }
     free(parent_path);
+    printf("Moving file %s to %s\n",old_path,new_path);
     
-    struct stat path_stat;
-    if (lstat(old_path, &path_stat) != 0) {
-        printf("Failed to get file status\n");
-        return -3;
+    if (rename(old_path,new_path) != 0) {
+        // check if it's a link
+        struct stat s;
+        if (lstat(old_path,&s) == 0) {
+            if (S_ISLNK(s.st_mode)) {
+                msg(ERROR,"Found Symbolic link, cannot move.\n");
+                return -1;
+            }
+        }
+    } else {
+        return 0;
     }
-    if (S_ISLNK(path_stat.st_mode)) {
-        printf("Moving link %s to %s\n",old_path,new_path);
-        return mvlink(old_path,new_path);
-    } else  {
-        printf("Moving file %s to %s\n",old_path,new_path);
-        return rename(old_path,new_path);
-    }
-
 }
 

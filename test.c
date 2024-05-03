@@ -128,61 +128,43 @@ void test_pmkdir() {
     assert(stat(path, &st) == 0);
     assert(S_ISDIR(st.st_mode));
 
-    // Cleanup
-    rmdir("/tmp/testdir/subdir");
-    rmdir("/tmp/testdir");
 }
 
 void test_mvsp() {
     // Create a temp directory
-    mkdir("/tmp/testdir", 0700);
+    char temp_dir_template[] = "/tmp/test_dir_XXXXXX";
+    char* temp_dir = mkdtemp(temp_dir_template);
+    assert(temp_dir != NULL); // Assert that directory was created successfully
+    mkdir(temp_dir, 0700);
 
+    char testfile_path[512];
+    snprintf(testfile_path, 512, "%s/testfile", temp_dir);
     // Create a temp file
-    FILE *file = fopen("/tmp/testdir/testfile", "w");
+    FILE *file = fopen(testfile_path, "w");
     assert(file != NULL);
     // Write some content to the file
     fputs("Hello, World!", file);
     fclose(file);
+    assert(stat(testfile_path, &st) == 0);
 
-    // add a symlink
-    symlink("./testfile", "/tmp/testdir/testlink");
-    // Check if the file and symlink were created
-    struct stat st = {0};
-    assert(stat("/tmp/testdir/testfile", &st) == 0);
-    assert(stat("/tmp/testdir/testlink", &st) == 0);
 
-    // Call the function to test
-    mkdir("/tmp/testnewdir", 0700);
-    int res = mvsp("/tmp/testdir/testfile", "/tmp/testnewdir/testfile");
+    // Create a new directory
+    char temp_newdir_template[] = "/tmp/test_newdir_XXXXXX";
+    char* temp_newdir = mkdtemp(temp_newdir_template);
+    assert(temp_newdir != NULL); // Assert that directory was created successfully
+    mkdir(temp_newdir, 0700);
+
+    char testnewfile_path[512];
+    snprintf(testnewfile_path, 512, "%s/testfile", temp_newdir);
+    int res = mvsp(testfile_path, testnewfile_path);
 
     // Check if the file was moved
-    assert(stat("/tmp/testdir/testfile", &st) == -1);
-    assert(stat("/tmp/testnewdir/testfile", &st) == 0);
-
-    // move the symlink
-    res = mvsp("/tmp/testdir/testlink", "/tmp/testnewdir/testlink");
-    printf("res: %d\n", res);
-    if (res != 0) {
-        msg(ERROR, "mvsp failed with error code %d\n", res);
-        exit(1);
-    }
-
-    // Check if the symlink was moved
-    assert(stat("/tmp/testdir/testlink", &st) == -1);
-
-
-    // check if the symlink points to the correct file
-    char buf[256];
-    ssize_t len = readlink("/tmp/testdir/testlink", buf, sizeof(buf));
-    assert(len != -1);
-    buf[len] = '\0';
-    assert(strcmp(buf, "/tmp/testnewdir/testfile") == 0);
-
+    assert(stat(testfile_path, &st) == -1);
+    assert(stat(testnewfile_path, &st) == 0);
 
     // Cleanup
     remove("/tmp/testdir/testlink");
     remove("/tmp/testnewdir/testfile");
-
 }
 
 void test_ls() {
