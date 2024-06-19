@@ -180,8 +180,23 @@ int mvsp(char* old_path,char* new_path, char* root)
         return mvlink(old_path,new_path,root);
     } else  {
         printf("Moving file %s to %s\n",old_path,new_path);
-        return rename(old_path,new_path);
-    }
+        
+        struct stat st;
+        stat(old_path, &st);
+        int size = st.st_size;
 
+        char* buffer = malloc(size);
+
+        FILE *old_ptr;
+        FILE *new_ptr;
+
+        old_ptr = fopen(old_path,"r"); 
+        fread(buffer, sizeof(char), size, old_ptr); 
+        fclose(old_ptr);
+
+        new_ptr = fopen(new_path,"w"); 
+        fread(buffer, sizeof(char), size, new_ptr); 
+        return fclose(new_ptr);
+    }
 }
 
