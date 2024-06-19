@@ -195,8 +195,7 @@ int mvsp(char* old_path,char* new_path, char* root)
         fclose(old_ptr);
 
         new_ptr = fopen(new_path,"w"); 
-        fread(buffer, sizeof(char), size, new_ptr); 
+        fwrite(buffer, sizeof(char), size, new_ptr); 
         return fclose(new_ptr);
     }
 }
-
