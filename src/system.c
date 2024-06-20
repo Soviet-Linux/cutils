@@ -196,9 +196,10 @@ int mvsp(char* old_path,char* new_path, char* root)
 
         new_ptr = fopen(new_path,"w"); 
         fwrite(buffer, sizeof(char), size, new_ptr);
+        int result = fclose(new_ptr);
 
         chown(new_path, getuid(), getgid());
         chmod(new_path, 0755); 
-        return fclose(new_ptr);
+        return result;
     }
 }
