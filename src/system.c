@@ -76,6 +76,12 @@ int pmkdir (const char *dir)
 char* relpath(char* start,char* end) {
     printf("Start: %s\n",start);
     printf("End: %s\n",end);
+
+    if (end[0] != '/') {
+        msg(WARNING,"Relative paths\n");
+        return strdup(end);
+    }
+
     // get the relative path between old_path and link
     // first get the common prefix
     int i = 0;
