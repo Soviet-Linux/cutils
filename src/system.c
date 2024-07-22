@@ -101,7 +101,12 @@ int mvsp(char* old_path,char* new_path)
                 return -1;
             }
         }
+        else {
+            msg(ERROR,"Error moving file\n");
+            return -1;
+        }
     }
+
     return 0;
 }
 
