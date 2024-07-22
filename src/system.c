@@ -155,11 +155,13 @@ int mvlink(char* old_path,char* new_path)
     
 
     dbg(3,"Getting absolute path of %s\n",new_link);
+    char* new_link_abs = NULL;
     if (new_link[0] != '/') {
         // allocate memory for the absolute path
-        char* new_link_abs = realpath(new_link,NULL);
-    } 
-
+        new_link_abs = realpath(new_link,NULL);
+    } else {
+        new_link_abs = strdup(new_link);
+    }
 
     if (new_link_abs == NULL) {
         msg(ERROR,"Error getting absolute path\n");
