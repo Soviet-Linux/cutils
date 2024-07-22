@@ -25,8 +25,13 @@ OBJECTS = $(SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 # memory checking
 MEMCHECK = 1
 
-# The default target
-all: $(LIBRARY)
+# The default targetall: directories $(LIBRARY)
+all: directories $(LIBRARY)
+
+# Create the necessary directories
+directories:
+	mkdir -p $(OBJ_DIR)
+	mkdir -p $(BIN_DIR)
 
 # Build the library
 $(LIBRARY): $(OBJECTS)

@@ -74,18 +74,25 @@ int pmkdir (const char *dir)
 }
 
 char* relpath(char* start,char* end) {
-    printf("Start: %p\n",start);
-    printf("End: %p\n",end);
+    printf("Start: %s\n",start);
+    printf("End: %s\n",end);
     // get the relative path between old_path and link
     // first get the common prefix
     int i = 0;
-    while (start[i] == end[i]) i++;
+    int tmp = 0;
+    while (start[tmp] == end[tmp]) {
+        if (start[tmp] == '/') i = tmp;
+        tmp++;
+    }
+    i++;
+    printf("Common prefix: %.*s\n",i,start);
     // then get the path from old_path to the common prefix
     char* part_path = start+i;
     // count the number of '/' in part_path
     dbg(3,"Part path: %s\n",part_path);
     // sanitize by removing the last '/'
     if (part_path[strlen(part_path)-1] == '/') part_path[strlen(part_path)-1] = '\0';
+ 
 
     int count = 0;
     for (int j = 0; j < strlen(part_path); j++) {
@@ -98,6 +105,9 @@ char* relpath(char* start,char* end) {
     }
     // add the remaining part of the link
     strncat(rel_path,end+i,strlen(end)-i);
+
+    dbg(3,"Relative path: %s\n",rel_path);
+
     // 
     return strdup(rel_path);
 
@@ -129,11 +139,13 @@ int mvlink(char* old_path,char* new_path)
     strncpy(parent_path,new_path,strrchr(new_path, '/')-new_path);
 
 
-    char* new_link = calloc(strlen(parent_path)+strlen(rel_path)+1,sizeof(char));
+    char* new_link = calloc(strlen(parent_path)+strlen(rel_path)+64,sizeof(char));
     strncpy(new_link,parent_path,strlen(parent_path));
     // add the separator
     if (new_link[strlen(new_link)-1] != '/') strncat(new_link,"/",1);
     strncat(new_link,rel_path,strlen(rel_path));
+
+
     
 
     dbg(3,"Getting absolute path of %s\n",new_link);
@@ -149,6 +161,12 @@ int mvlink(char* old_path,char* new_path)
     dbg(3,"%s -> %s\n",new_path,new_link_abs);
     if (symlink(new_link_abs,new_path) != 0) {
         msg(ERROR,"Error creating link\n");
+        return -1;
+    }
+
+    // remove the old link
+    if (unlink(old_path) != 0) {
+        msg(ERROR,"Error removing old link\n");
         return -1;
     }
 
@@ -179,22 +197,21 @@ int mvsp(char* old_path,char* new_path)
             break;
     }
     free(parent_path);
+
+    // check if it's a link
+    struct stat s;
+    if (lstat(old_path,&s) != 0) {
+        msg(ERROR,"Error getting file info\n");
+    } 
+    if (S_ISLNK(s.st_mode)) {
+        return mvlink(old_path,new_path);
+    }
     
     if (rename(old_path,new_path) != 0) {
-        // check if it's a link
-        struct stat s;
-        if (lstat(old_path,&s) == 0) {
-            if (S_ISLNK(s.st_mode)) {
-                msg(ERROR,"Found Symbolic link, cannot move.\n");
-                return -1;
-            }
-        }
-        else {
-            msg(ERROR,"Error moving file\n");
-            return -1;
-        }
+        msg(ERROR,"Error moving file\n");
+        return -1;
     }
-
+    
     return 0;
 }
 

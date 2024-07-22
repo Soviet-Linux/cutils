@@ -131,7 +131,7 @@ void test_mvsp() {
     char temp_dir_template[] = "/tmp/test_dir_XXXXXX";
     char* temp_dir = mkdtemp(temp_dir_template);
     assert(temp_dir != NULL); // Assert that directory was created successfully
-    mkdir(temp_dir, 0700);
+    assert(isdir(temp_dir) == 0); // Assert that directory exists
 
     char testfile_path[512];
     snprintf(testfile_path, 512, "%s/testfile", temp_dir);
@@ -142,6 +142,12 @@ void test_mvsp() {
     fputs("Hello, World!", file);
     fclose(file);
 
+    char testlink_path[512];
+    snprintf(testlink_path, 512, "%s/testlink", temp_dir);
+    // Create a symlink
+    int res = symlink(testfile_path, testlink_path);
+    assert(res == 0); // symlink should return 0 for successful creation
+
     struct stat st;
     assert(stat(testfile_path, &st) == 0);
 
@@ -149,19 +155,31 @@ void test_mvsp() {
     char temp_newdir_template[] = "/tmp/test_newdir_XXXXXX";
     char* temp_newdir = mkdtemp(temp_newdir_template);
     assert(temp_newdir != NULL); // Assert that directory was created successfully
-    mkdir(temp_newdir, 0700);
+    assert(isdir(temp_newdir) == 0); // Assert that directory exists
 
     char testnewfile_path[512];
     snprintf(testnewfile_path, 512, "%s/testfile", temp_newdir);
-    int res = mvsp(testfile_path, testnewfile_path);
-
+    res = mvsp(testfile_path, testnewfile_path);
+    assert(res == 0); // mvsp should return 0 for successful move
     // Check if the file was moved
     assert(stat(testfile_path, &st) == -1);
     assert(stat(testnewfile_path, &st) == 0);
 
-    // Cleanup
-    remove("/tmp/testdir/testlink");
-    remove("/tmp/testnewdir/testfile");
+    char testnewlink_path[512];
+    snprintf(testnewlink_path, 512, "%s/testlink", temp_newdir);
+
+    printf( "testlink_path: %s\n", testlink_path);
+    printf( "testnewlink_path: %s\n", testnewlink_path);
+
+    res = mvsp(testlink_path, testnewlink_path);
+    assert(res == 0); // mvsp should return 0 for successful move
+
+    assert(stat(testlink_path, &st) == -1);
+    int t = stat(testnewlink_path, &st);
+    perror("stat");
+    assert(t == 0);
+
+ 
 }
 
 void test_ls() {
@@ -450,6 +468,10 @@ int main(int argc, char const *argv[])
     test_wrfile();
     msg(INFO, "test_pmkdir()");
     test_pmkdir();
+    msg(INFO, "test_relpath()");
+    test_relpath();
+    msg(INFO, "test_mvlink()");
+    test_mvlink();
     msg(INFO, "test_mvsp()");
     test_mvsp();
     msg(INFO, "test_ls()");
@@ -460,10 +482,6 @@ int main(int argc, char const *argv[])
     test_countc();
     msg(INFO, "test_strinarr()");
     test_strinarr();
-    msg(INFO, "test_relpath()");
-    test_relpath();
-    msg(INFO, "test_mvlink()");
-    test_mvlink();
     msg(INFO, "All tests passed!");
 
     msg(INFO,"Leaks: %d",check_leaks());
