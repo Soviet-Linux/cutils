@@ -53,6 +53,10 @@ int isdir (const char *d);
 int pmkdir (const char *dir);
 //  move a file and create the dir if it doesn't exist
 int mvsp(char* old_path,char* new_path);
+// move a symlink 
+int mvlink(char* old_path,char* new_path);
+// get the relative path between two paths
+char* relpath(char* start,char* end);
 // LIST  file in a dir
 char** ls(char* path);
 // exec a shell command and return the output

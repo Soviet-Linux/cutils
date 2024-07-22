@@ -23,7 +23,7 @@ SOURCES = $(wildcard $(SRC_DIR)/*.c)
 OBJECTS = $(SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 # memory checking
-MEMCHECK = 0
+MEMCHECK = 1
 
 # The default target
 all: $(LIBRARY)
@@ -37,7 +37,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $< -D MEMCHECK=$(MEMCHECK)
 
 check:
-	$(CC) $(CFLAGS) -o $(BIN_DIR)/test test.c $(LIBRARY).a
+	$(CC) $(CFLAGS) -o $(BIN_DIR)/test test.c $(LIBRARY).a -D MEMCHECK=$(MEMCHECK)
 	bin/test
 
 clean:

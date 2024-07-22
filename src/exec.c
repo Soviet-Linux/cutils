@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../cutils.h"
 
 char* exec(const char* cmd) 
 {

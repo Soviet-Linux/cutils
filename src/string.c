@@ -1,6 +1,8 @@
 #include "stdlib.h"
 #include "string.h"
 
+#include "../cutils.h"
+
 unsigned int splita (char* string,char delim,char*** dest) {
     unsigned int count = 0;
     unsigned int alloced = 16 * sizeof(char*);

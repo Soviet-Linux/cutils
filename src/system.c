@@ -73,6 +73,94 @@ int pmkdir (const char *dir)
 
 }
 
+char* relpath(char* start,char* end) {
+    printf("Start: %p\n",start);
+    printf("End: %p\n",end);
+    // get the relative path between old_path and link
+    // first get the common prefix
+    int i = 0;
+    while (start[i] == end[i]) i++;
+    // then get the path from old_path to the common prefix
+    char* part_path = start+i;
+    // count the number of '/' in part_path
+    dbg(3,"Part path: %s\n",part_path);
+    // sanitize by removing the last '/'
+    if (part_path[strlen(part_path)-1] == '/') part_path[strlen(part_path)-1] = '\0';
+
+    int count = 0;
+    for (int j = 0; j < strlen(part_path); j++) {
+        if (part_path[j] == '/') count++;
+    }
+    // create the relative path
+    char rel_path[2048] = {0};
+    for (int j = 0; j < count; j++) {
+        strncat(rel_path,"../",4);
+    }
+    // add the remaining part of the link
+    strncat(rel_path,end+i,strlen(end)-i);
+    // 
+    return strdup(rel_path);
+
+}
+
+int mvlink(char* old_path,char* new_path)
+{
+    dbg(3,"Moving link %s to %s\n",old_path,new_path);
+
+    // read the link in old_path
+    char link[2048]; // 2048 is the max length of a path
+    ssize_t len = readlink(old_path, link, sizeof(link)-1);
+    // check for overflow
+    if (len == -1) {
+        msg(ERROR,"Error reading link\n");
+        return -1;
+    }
+
+    link[len] = '\0';
+
+    char* rel_path = relpath(old_path,link);
+
+
+    dbg(3,"%s -> %s\n",old_path,link);
+    dbg(3,"Relative path: %s\n",rel_path);
+
+    //get parent dir of new_path
+    char* parent_path = calloc(strlen(new_path)+1,sizeof(char));
+    strncpy(parent_path,new_path,strrchr(new_path, '/')-new_path);
+
+
+    char* new_link = calloc(strlen(parent_path)+strlen(rel_path)+1,sizeof(char));
+    strncpy(new_link,parent_path,strlen(parent_path));
+    // add the separator
+    if (new_link[strlen(new_link)-1] != '/') strncat(new_link,"/",1);
+    strncat(new_link,rel_path,strlen(rel_path));
+    
+
+    dbg(3,"Getting absolute path of %s\n",new_link);
+    // allocate memory for the absolute path
+    char* new_link_abs = realpath(new_link,NULL);
+
+    if (new_link_abs == NULL) {
+        msg(ERROR,"Error getting absolute path\n");
+        perror("realpath");
+        return -1;
+    }
+
+    dbg(3,"%s -> %s\n",new_path,new_link_abs);
+    if (symlink(new_link_abs,new_path) != 0) {
+        msg(ERROR,"Error creating link\n");
+        return -1;
+    }
+
+    free(rel_path);
+    free(new_link);
+    free(new_link_abs);
+    free(parent_path);
+
+
+    return 0;
+}
+
 
 int mvsp(char* old_path,char* new_path)
 {

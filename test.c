@@ -181,6 +181,11 @@ void test_ls() {
     // Test with a non-existing directory
     char** result_non_existing = ls("non_existing_directory");
     assert(*result_non_existing == NULL); // ls should return NULL for a non-existing directory
+
+    // Free the result
+    free(result);
+    free(result_non_existing);
+
 }
 
 void test_splita() {
@@ -197,7 +202,7 @@ void test_splita() {
     assert(strcmp(result[1], "World") == 0); // Second string should be "World"
 
 
-    //free(*result);
+    free(result);
 }
 
 void test_countc() {
@@ -223,6 +228,137 @@ void test_strinarr() {
     // Test with a value that is not in the array
     index = strinarr("NotInArray", arr, arrsize);
     assert(index == -1); // strinarr should return -1 for a value that is not in the array
+}
+
+
+void test_relpath() {
+    // create a temp directory
+    char temp_dir_template[512] = "/tmp/test_dir_XXXXXX\0";
+    char* temp_dir = mkdtemp(temp_dir_template);
+    assert(temp_dir != NULL); // Assert that directory was created successfully
+    assert(isdir(temp_dir) == 0); // Assert that directory exists
+    char* start = calloc(512, sizeof(char));
+    char* end = calloc(512, sizeof(char));
+
+    sprintf(start, "%s/a/b/c/d/1", temp_dir);
+    sprintf(end, "%s/b/f/g/h/2", temp_dir);
+
+    char start_parent[512];
+    strncpy(start_parent, start, strrchr(start, '/') - start);
+    start_parent[strrchr(start, '/') - start] = '\0';
+    char end_parent[512];
+    strncpy(end_parent, end, strrchr(end, '/') - end);
+    end_parent[strrchr(end, '/') - end] = '\0';
+
+    int res = pmkdir(start_parent);
+    assert(res == 0); // pmkdir should return 0 for successful directory creation
+    res = pmkdir(end_parent);
+    assert(res == 0); // pmkdir should return 0 for successful directory creation
+
+
+
+    FILE *file = fopen(start, "w");
+    assert(file != NULL);
+    fputs("Hello, World! - START", file);
+    fclose(file);
+    //dbg(1, "start: %s", start);
+    file = fopen(end, "w");
+    assert(file != NULL);
+    fputs("Hello, World! - END", file);
+    fclose(file);
+    //dbg(1, "end: %s", end);
+
+
+    char* result = relpath(start, end);
+    printf("results: %s\n", result);
+    char rel_end_path[2048];
+    sprintf(rel_end_path, "%s/%s", start_parent, result);
+    printf( "rel_end_path: %s\n", rel_end_path);
+    // open rel_end_path and check its content
+    FILE *rel_file = fopen(rel_end_path, "r");
+    //perror("fopen");
+    assert(rel_file != NULL); // Assert that file was opened successfully
+
+    char content[128];
+    fgets(content, sizeof(content), rel_file);
+    fclose(rel_file);
+    assert(strcmp(content, "Hello, World! - END") == 0); // Assert that content is correct
+
+    free(result);
+    free(start);
+    free(end);
+
+    return;
+}
+
+void test_mvlink() {
+    // Create a temp directory
+    char temp_dir_template[] = "/tmp/test_dir_XXXXXX";
+    char* temp_dir = mkdtemp(temp_dir_template);
+    assert(temp_dir != NULL); // Assert that directory was created successfully
+    mkdir(temp_dir, 0700);
+    // create temp_dir/old
+    char old_path[512];
+    snprintf(old_path, 512, "%s/old", temp_dir);
+    mkdir(old_path, 0700);
+    // create another temp_dir/old/a
+    char old_a_path[512];
+    snprintf(old_a_path, 512, "%s/a", old_path);
+    mkdir(old_a_path, 0700);
+    // create temp_dir/old/b
+    char old_b_path[512];
+    snprintf(old_b_path, 512, "%s/b", old_path);
+    mkdir(old_b_path, 0700);
+
+    // in temp_dir/old/a create a file
+    char old_a_file_path[512];
+    snprintf(old_a_file_path, 512, "%s/file.txt", old_a_path);
+    FILE *file = fopen(old_a_file_path, "w");
+    assert(file != NULL);
+    fputs("Hello, World!", file);
+    fclose(file);
+
+    // in temp_dir/old/b create a symlink to temp_dir/old/a/file.txt
+    char old_b_link_path[512];
+    snprintf(old_b_link_path, 512, "%s/link.txt", old_b_path);
+    symlink(old_a_file_path, old_b_link_path);
+
+    // create temp_dir/new
+    char new_path[512];
+    snprintf(new_path, 512, "%s/new", temp_dir);
+    mkdir(new_path, 0700);
+
+    // create temp_dir/new/a
+    char new_a_path[512];
+    snprintf(new_a_path, 512, "%s/a", new_path);
+    mkdir(new_a_path, 0700);
+
+    // create temp_dir/new/b
+    char new_b_path[512];
+    snprintf(new_b_path, 512, "%s/b", new_path);
+    mkdir(new_b_path, 0700);
+
+    // move the file
+    char new_a_file_path[512];
+    snprintf(new_a_file_path, 512, "%s/file.txt", new_a_path);
+    int res = rename(old_a_file_path, new_a_file_path);
+    assert(res == 0); // rename should return 0 for successful move
+
+
+    // move the link
+    char new_b_link_path[512];
+    snprintf(new_b_link_path, 512, "%s/link.txt", new_b_path);
+    res = mvlink(old_b_link_path, new_b_link_path);
+    assert(res == 0); // mvlink should return 0 for successful move
+    printf( "Link moved\n");
+    // check if the link points to new_a_file_path
+    char link_target[512];
+    ssize_t len = readlink(new_b_link_path, link_target, sizeof(link_target));
+    assert(len != -1); // readlink should return a non-negative value for successful read
+    link_target[len] = '\0';
+    assert(strcmp(link_target, new_a_file_path) == 0); // link should point to new_a_file_path
+
+    return;
 }
 
 
@@ -284,6 +420,10 @@ void test_check_leaks()
 
 int main(int argc, char const *argv[])
 {
+
+    DEBUG = 4;  
+    DEBUG_UNIT = NULL;
+
     msg(INFO, "Running tests");
     msg(INFO, "test_popchar()");
     popchar_test();
@@ -320,7 +460,13 @@ int main(int argc, char const *argv[])
     test_countc();
     msg(INFO, "test_strinarr()");
     test_strinarr();
-
+    msg(INFO, "test_relpath()");
+    test_relpath();
+    msg(INFO, "test_mvlink()");
+    test_mvlink();
     msg(INFO, "All tests passed!");
+
+    msg(INFO,"Leaks: %d",check_leaks());
+
     return 0;
 }

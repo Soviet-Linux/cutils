@@ -1,8 +1,14 @@
-#include "../cutils.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <malloc.h>
+
+#define MEMCHECK 0
+
+#include "../cutils.h"
+
+
 
 #define MAX_PTRS 4096
 
@@ -74,7 +80,7 @@ void* dbg_malloc(size_t size, char* file, int line)
     dbg(4, "dbg_malloc: %s:%d - %zu bytes", file, line, size);
     void* ptr = malloc(size);
     if (ptr == NULL) {
-        dbg(1, "dbg_malloc: malloc failed");
+        msg(ERROR, "\tmalloc failed");
     }
     log_ptr(ptr, file, line);
     return ptr;
@@ -85,7 +91,7 @@ void* dbg_calloc(size_t nmemb, size_t size, char* file, int line)
     dbg(4, "dbg_calloc: %s:%d - %zu bytes", file, line, nmemb * size);
     void* ptr = calloc(nmemb, size);
     if (ptr == NULL) {
-        dbg(1, "dbg_calloc: calloc failed");
+        msg(ERROR, "\tcalloc failed");
     }
     log_ptr(ptr, file, line);
     return ptr;
@@ -96,7 +102,7 @@ void* dbg_realloc(void* ptr, size_t size, char* file, int line)
     dbg(4, "dbg_realloc: %s:%d %p %zu->%zu bytes", file, line, ptr, malloc_usable_size(ptr), size);
     void* newptr = realloc(ptr, size);
     if (newptr == NULL) {
-        dbg(1, "dbg_realloc: realloc failed");
+        msg(ERROR, "\trealloc failed");
     }
     unlog_ptr(ptr, file, line);
     log_ptr(newptr, file, line);
@@ -109,7 +115,7 @@ char* dbg_strdup(char* str, char* file, int line)
     dbg(4, "dbg_strdup: %s:%d - %zu bytes", file, line, size);
     char* newstr = strdup(str);
     if (newstr == NULL) {
-        dbg(1, "dbg_strdup: strdup failed");
+        msg(ERROR, "\tstrdup failed");
     }
     log_ptr(newstr, file, line);
     return newstr;
@@ -123,9 +129,9 @@ void dbg_free(void* ptr, char* file, int line)
         char* pos = find_dfree((char*) ptr);
         if (pos != NULL)
         {
-            dbg(1, "dbg_free: trying to free already freed at %s pointer --> %p", pos, ptr);
+            msg(WARNING, "\ttrying to free %p already freed at %s ",ptr, pos);
         } else {
-            dbg(1, "dbg_free: trying to free unallocated pointer --> %p", ptr);
+            msg(WARNING, "\ttrying to free unallocated pointer --> %p", ptr);
         }
     }
     free(ptr);

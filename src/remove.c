@@ -3,6 +3,7 @@
 #include <ftw.h>
 #include <unistd.h>
 
+#include "../cutils.h"
 
 // Callback function used by nftw to unlink files and directories
 /*
