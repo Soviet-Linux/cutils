@@ -7,6 +7,62 @@
 
 #include "../cutils.h"
 
+// X-Device Rename
+// allows to rename a file between different devices
+int xrename(char* old_path,char* new_path) {
+    struct stat st;
+    stat(old_path, &st);
+    int size = st.st_size;
+    int permissions = st.st_mode;
+    int owner = st.st_uid;
+    int group = st.st_gid;
+
+    char* buffer = malloc(size);
+
+    FILE *old_ptr;
+    FILE *new_ptr;
+
+    old_ptr = fopen(old_path,"r"); 
+    if (old_ptr == NULL) {
+        msg(ERROR,"Error opening file %s",old_path);
+        return -1;
+    }
+    fread(buffer, sizeof(char), size, old_ptr); 
+    fclose(old_ptr);
+
+    new_ptr = fopen(new_path,"w"); 
+    if (new_ptr == NULL) {
+        msg(ERROR,"Error opening file %s",new_path);
+        return -2;
+    }
+    fwrite(buffer, sizeof(char), size, new_ptr);
+    int result = fclose(new_ptr);
+
+    if (result != 0) {
+        msg(ERROR,"Error writing to file %s",new_path);
+        return -3;
+    }
+
+    free(buffer);
+
+    if (chown(new_path, owner, group) != 0) {
+        msg(ERROR,"Error changing owner of %s",new_path);
+        return -4;
+    }
+    if (chmod(new_path, permissions) != 0) {
+        msg(ERROR,"Error changing permissions of %s",new_path);
+        return -5;
+    }
+
+    if (remove(old_path) != 0) {
+        msg(ERROR,"Error removing old file %s",old_path);
+        return -6;
+    }
+
+    return 0;
+}
+#define rename xrename
+
 int isdir (const char *d)
 {
 
@@ -74,11 +130,9 @@ int pmkdir (const char *dir)
 }
 
 char* relpath(char* start,char* end) {
-    printf("Start: %s\n",start);
-    printf("End: %s\n",end);
 
     if (end[0] != '/') {
-        msg(WARNING,"Relative paths\n");
+        dbg(3,"Relative paths\n");
         return strdup(end);
     }
 
@@ -91,11 +145,8 @@ char* relpath(char* start,char* end) {
         tmp++;
     }
     i++;
-    printf("Common prefix: %.*s\n",i,start);
     // then get the path from old_path to the common prefix
     char* part_path = start+i;
-    // count the number of '/' in part_path
-    dbg(3,"Part path: %s\n",part_path);
     // sanitize by removing the last '/'
     if (part_path[strlen(part_path)-1] == '/') part_path[strlen(part_path)-1] = '\0';
  
@@ -112,8 +163,6 @@ char* relpath(char* start,char* end) {
     // add the remaining part of the link
     strncat(rel_path,end+i,strlen(end)-i);
 
-    dbg(3,"Relative path: %s\n",rel_path);
-
     // 
     return strdup(rel_path);
 
@@ -121,14 +170,14 @@ char* relpath(char* start,char* end) {
 
 int mvlink(char* old_path,char* new_path)
 {
-    dbg(3,"Moving link %s to %s\n",old_path,new_path);
+    dbg(3,"Moving link %s to %s",old_path,new_path);
 
     // read the link in old_path
     char link[2048]; // 2048 is the max length of a path
     ssize_t len = readlink(old_path, link, sizeof(link)-1);
     // check for overflow
     if (len == -1) {
-        msg(ERROR,"Error reading link\n");
+        msg(ERROR,"Error reading link");
         return -1;
     }
 
@@ -137,8 +186,8 @@ int mvlink(char* old_path,char* new_path)
     char* rel_path = relpath(old_path,link);
 
 
-    dbg(3,"%s -> %s\n",old_path,link);
-    dbg(3,"Relative path: %s\n",rel_path);
+    //dbg(3,"%s -> %s\n",old_path,link);
+    //dbg(3,"Relative path: %s\n",rel_path);
 
     //get parent dir of new_path
     char* parent_path = calloc(strlen(new_path)+1,sizeof(char));
@@ -154,7 +203,7 @@ int mvlink(char* old_path,char* new_path)
 
     
 
-    dbg(3,"Getting absolute path of %s\n",new_link);
+    //dbg(3,"Getting absolute path of %s\n",new_link);
     char* new_link_abs = NULL;
     if (new_link[0] != '/') {
         // allocate memory for the absolute path
@@ -164,20 +213,20 @@ int mvlink(char* old_path,char* new_path)
     }
 
     if (new_link_abs == NULL) {
-        msg(ERROR,"Error getting absolute path\n");
+        msg(ERROR,"Error getting absolute path");
         perror("realpath");
         return -1;
     }
 
-    dbg(3,"%s -> %s\n",new_path,new_link_abs);
+    dbg(3,"%s -> %s",new_path,new_link_abs);
     if (symlink(new_link_abs,new_path) != 0) {
-        msg(ERROR,"Error creating link\n");
+        msg(ERROR,"Error creating link");
         return -1;
     }
 
     // remove the old link
     if (unlink(old_path) != 0) {
-        msg(ERROR,"Error removing old link\n");
+        msg(ERROR,"Error removing old link");
         return -1;
     }
 
@@ -220,7 +269,8 @@ int mvsp(char* old_path,char* new_path)
     
     if (rename(old_path,new_path) != 0) {
         msg(ERROR,"Error moving file\n");
-        return -1;
+        perror("rename");
+        return -4;
     }
     
     return 0;
