@@ -13,7 +13,7 @@ jobs:
       - name: Checkout parent repo
         uses: actions/checkout@v2
         with:
-          submodules: true  # Ensure submodules are checked out
+          submodules: recurse
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
@@ -25,11 +25,8 @@ jobs:
         run: |
           set -x  # Enable debug logging
           git checkout -b update-submodule
-          git submodule update --remote --merge
-          git status
-          git diff
+          (cd lib/cutils &&  git pull origin main)
           git add .
-          git status
           git commit -m "Update submodule to latest commit" || echo "Nothing to commit"
 
       - name: Push changes
