@@ -22,7 +22,7 @@ jobs:
 
       - name: Update submodule
         run: |
-          set -x  # Enable debug logging
+          cd libspm
           git checkout -b update-submodule
           (cd lib/cutils &&  git pull origin main)
           git add .
