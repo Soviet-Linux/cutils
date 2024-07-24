@@ -29,14 +29,12 @@ jobs:
           git commit -m "Update submodule to latest commit" || echo "Nothing to commit"
 
       - name: Push changes
-        if: success() && steps.update.outputs.changes == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git push origin update-submodule
 
       - name: Create Pull Request
-        if: success() && steps.update.outputs.changes == 'true'
         uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
