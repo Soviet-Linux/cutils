@@ -207,9 +207,8 @@ int mvlink(char* old_path,char* new_path)
     char* new_link_abs = NULL;
     new_link_abs = realpath(new_link,NULL);
     if (new_link_abs == NULL) {
-        msg(ERROR,"Error getting absolute path");
-        perror("realpath");
-        return -1;
+        msg(WARNING,"Error getting absolute path");
+        new_link_abs = strdup(new_link);
     }
 
     if (new_link_abs == NULL) {
