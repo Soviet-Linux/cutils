@@ -374,6 +374,7 @@ void test_mvlink() {
     ssize_t len = readlink(new_b_link_path, link_target, sizeof(link_target));
     assert(len != -1); // readlink should return a non-negative value for successful read
     link_target[len] = '\0';
+    printf( "link_target: %s\n", link_target);
     assert(strcmp(link_target, new_a_file_path) == 0); // link should point to new_a_file_path
 
     return;
