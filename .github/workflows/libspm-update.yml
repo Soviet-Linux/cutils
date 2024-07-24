@@ -10,11 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout parent repo
-        uses: actions/checkout@v2
-        with:
-          submodules: recurse
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Clone Libspm
+        run: |
+          git clone https://github.com/Soviet-Linux/libspm --recurse-submodules
+          cd libspm
 
       - name: Configure Git
         run: |
