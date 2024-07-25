@@ -109,6 +109,73 @@ int f_dbg__(int level,int line,const char* function,const char* file,char* messa
 #define dbg(level,message,...) f_dbg__(level,__LINE__,__func__,__FILE__,message,##__VA_ARGS__)
 
 
+/* Hashtable (Dict) implementation */
+
+// A pair of values :
+//  * key : the key of the pair (in bytes)
+//  * value : the value of the pair (pointer to anything)
+typedef struct pair {
+    char* key;
+    void* value;
+} pair;
+
+// An item in the hashtable :
+//  * data : the pairs of the item
+//  * size : the number of pairs in the item
+//  * capacity : the capacity of the item
+typedef struct {
+    pair* data;
+    int size;
+    int capacity;
+} item;
+
+// The hashtable :
+//  * items : the items in the hashtable
+//  * capacity : the capacity of the hashtable
+typedef struct {
+    item *items;
+    int capacity;
+} hashtable;
+
+// create a new hashtable
+//  * capacity : the capacity of the hashtable you want
+hashtable *hm_create(int capacity);
+// destroy a hashtable (free the memory)
+//  * hm : the hashtable you want to destroy
+void hm_destroy(hashtable *hm);
+// add a pair to the hashtable
+//  * hm : the hashtable you want to add the pair to
+//  * key : the key of the pair
+//  * value : the value of the pair
+// Equivalent to hm[key] = value
+int hm_add(hashtable *hm, char *key, void *value);
+// get a value from the hashtable
+//  * hm : the hashtable you want to get the value from
+//  * key : the key of the pair
+// Equivalent to hm[key]
+void* hm_get(hashtable *hm, char *key);
+// remove a pair from the hashtable
+//  * hm : the hashtable you want to remove the pair from
+//  * key : the key of the pair
+// Equivalent to del hm[key]
+int hm_rm(hashtable *hm, char *key);
+// visualize the hashtable
+// basic pretty print of the hashtable
+//  * hm : the hashtable you want to visualize
+int hm_visualize(hashtable *hm);
+// initialize a hashtable with a list of key-value pairs
+//  * kvlist : the list of key-value pairs 
+//  * size : the size of the list
+hashtable* hm_init(void* kvlist[][2],int size);
+// get the hash of a key
+//  * hm : the hashtable you want to get the hash from
+//  * key : the key you want to get the hash of
+// WARNING : Used only internally
+unsigned int hm_hash(hashtable *hm, char *key);;
+
+
+
+
 // memory safety and debugging
 void* dbg_malloc(size_t size,char* file,int line);
 void* dbg_calloc(size_t nmemb,size_t size,char* file,int line);
@@ -123,9 +190,10 @@ void dbg_free(void* ptr,char* file,int line);
     #define realloc(ptr,size) dbg_realloc(ptr,size,__FILE__,__LINE__)
     #define strdup(str) dbg_strdup(str,__FILE__,__LINE__)
     #define free(ptr) dbg_free(ptr,__FILE__,__LINE__)
+
+    int check_leaks();
 #endif
 
-int check_leaks();
 
 #endif
 
