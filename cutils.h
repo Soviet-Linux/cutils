@@ -3,7 +3,7 @@ The CUtils Library is a collection of C functions.
 It can be used for any C project, but it was originally made for the Libspm/CCCP project.
 It is licensed under the GNU General Public License v3.0.
 
- * Copyright (C) 2019-2020  PKD <pkd@sovietlinxu.ml>
+ * Copyright (C) 2019-2024  PKD <pkd@sovietlinux.ml>
 
 */
 #include "string.h"
@@ -190,10 +190,9 @@ void dbg_free(void* ptr,char* file,int line);
     #define realloc(ptr,size) dbg_realloc(ptr,size,__FILE__,__LINE__)
     #define strdup(str) dbg_strdup(str,__FILE__,__LINE__)
     #define free(ptr) dbg_free(ptr,__FILE__,__LINE__)
-
-    int check_leaks();
 #endif
 
+int check_leaks();
 
 #endif
 

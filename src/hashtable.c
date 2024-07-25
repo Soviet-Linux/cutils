@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "hashtable.h"
-#include "cutils.h"
+#include "../cutils.h"
 
 hashtable* hm_create(int capacity)
 {
