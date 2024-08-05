@@ -10,7 +10,7 @@
 
 
 
-#define MAX_PTRS 4096
+#define MAX_PTRS 8192
 
 typedef struct {
     void* ptr;
