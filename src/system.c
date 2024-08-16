@@ -186,22 +186,26 @@ int mvlink(char* old_path,char* new_path)
     char* rel_path = relpath(old_path,link);
 
 
-    //dbg(3,"%s -> %s\n",old_path,link);
-    //dbg(3,"Relative path: %s\n",rel_path);
+    dbg(3,"Link: %s\n",link);
+    dbg(3,"Relative path: %s\n",rel_path);
 
     //get parent dir of new_path
     char* parent_path = calloc(strlen(new_path)+1,sizeof(char));
     strncpy(parent_path,new_path,strrchr(new_path, '/')-new_path);
 
+    dbg(3,"Parent path: %s\n",parent_path);
 
-    char* new_link = calloc(strlen(parent_path)+strlen(rel_path)+64,sizeof(char));
-    strncpy(new_link,parent_path,strlen(parent_path));
+    char* new_link = calloc(/*strlen(parent_path)+*/strlen(rel_path)+64,sizeof(char));
+
+    //strncpy(new_link,parent_path,strlen(parent_path));
+
     // add the separator
     if (new_link[strlen(new_link)-1] != '/') strncat(new_link,"/",1);
-    strncat(new_link,rel_path,strlen(rel_path));
 
+    //strncat(new_link,rel_path,strlen(rel_path));
 
-    
+    strncpy(new_link,rel_path,strlen(rel_path));
+    dbg(3,"New link: %s\n",new_link);
 
     //dbg(3,"Getting absolute path of %s\n",new_link);
     char* new_link_abs = NULL;
@@ -209,7 +213,7 @@ int mvlink(char* old_path,char* new_path)
     // TODO (maybe idk) : fix it
     //new_link_abs = realpath(new_link,NULL);
     if (new_link_abs == NULL) {
-        msg(WARNING,"Error getting absolute path");
+        //msg(WARNING,"Error getting absolute path");
         new_link_abs = strdup(new_link);
     }
 
