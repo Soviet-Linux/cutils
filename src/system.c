@@ -17,6 +17,15 @@ int xrename(char* old_path,char* new_path) {
     int owner = st.st_uid;
     int group = st.st_gid;
 
+    if (owner == 65534)
+    {
+        owner = 0;
+    }
+    if (group == 65534)
+    {
+        group = 0;
+    }
+
     char* buffer = malloc(size);
 
     FILE *old_ptr;
