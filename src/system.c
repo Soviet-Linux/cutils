@@ -209,7 +209,9 @@ int mvlink(char* old_path,char* new_path)
     //strncpy(new_link,parent_path,strlen(parent_path));
 
     // add the separator
-    if (new_link[strlen(new_link)-1] != '/') strncat(new_link,"/",1);
+    if (new_link[strlen(new_link) - 1] != '/') {
+    	strncat(new_link, "/", 2); // Reserve space for the null terminator
+    }
 
     //strncat(new_link,rel_path,strlen(rel_path));
 
@@ -289,4 +291,3 @@ int mvsp(char* old_path,char* new_path)
     
     return 0;
 }
-
