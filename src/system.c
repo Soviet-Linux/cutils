@@ -154,26 +154,31 @@ char* relpath(char* start,char* end) {
         tmp++;
     }
     i++;
+    
     // then get the path from old_path to the common prefix
     char* part_path = start+i;
-    // sanitize by removing the last '/'
-    if (part_path[strlen(part_path)-1] == '/') part_path[strlen(part_path)-1] = '\0';
- 
+    
+    // Sanitize by removing the last '/'
+    size_t len = strlen(part_path);
+    if (len > 0 && part_path[len - 1] == '/') {
+        part_path[len - 1] = '\0';
+    }
 
     int count = 0;
-    for (int j = 0; j < strlen(part_path); j++) {
+    for (size_t j = 0; j < strlen(part_path); j++) {
         if (part_path[j] == '/') count++;
     }
-    // create the relative path
+
+    // Create the relative path
     char rel_path[2048] = {0};
     for (int j = 0; j < count; j++) {
-        strncat(rel_path,"../",4);
+        strncat(rel_path, "../", 4);
     }
-    // add the remaining part of the link
-    strncat(rel_path,end+i,strlen(end)-i);
 
-    // 
-    return strdup(rel_path);
+    // Add the remaining part of the link
+    strncat(rel_path, end + i, strlen(end) - i);
+
+    return strdup(rel_path);    
 
 }
 
