@@ -7,7 +7,6 @@ unsigned int splita (char* string,char delim,char*** dest) {
     unsigned int count = 0;
     unsigned int alloced = 16 * sizeof(char*);
     *dest = calloc(16,sizeof(char*));
-    
     char sdelim[2];
     sdelim[0] = delim;
     sdelim[1] = 0;
@@ -15,14 +14,12 @@ unsigned int splita (char* string,char delim,char*** dest) {
     char* token = strtok(string, sdelim);
 
     while (token != NULL) {
-
-        (*dest)[count++] = token;
-        token = strtok(NULL, sdelim);
-
-        if (count*sizeof(char*) >= alloced) {
+        if ((count+1)*sizeof(char*) >= alloced) {
             alloced *= 1.5;
             *dest = realloc(*dest,alloced);
         }
+        (*dest)[count++] = strdup(token);
+        token = strtok(NULL, sdelim);
     }
 
     return count;

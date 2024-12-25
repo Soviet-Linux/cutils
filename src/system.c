@@ -107,7 +107,7 @@ char** ls(char* path)
                 printf("Error : too many elements in list , reallocating\n");
                 list = realloc(list,(count+512) * sizeof(char*));
             }
-            list[count] = dir->d_name;
+            list[count] = strdup(dir->d_name);
             count++;
         }
 
@@ -209,9 +209,7 @@ int mvlink(char* old_path,char* new_path)
     //strncpy(new_link,parent_path,strlen(parent_path));
 
     // add the separator
-    if (new_link[strlen(new_link) - 1] != '/') {
-    	strncat(new_link, "/", 2); // Reserve space for the null terminator
-    }
+    //if (new_link[strlen(new_link)-1] != '/') strncat(new_link,"/",2);
 
     //strncat(new_link,rel_path,strlen(rel_path));
 
@@ -291,3 +289,4 @@ int mvsp(char* old_path,char* new_path)
     
     return 0;
 }
+
