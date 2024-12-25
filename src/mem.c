@@ -1,3 +1,4 @@
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,6 +7,8 @@
 #define MEMCHECK 0
 
 #include "../cutils.h"
+
+
 
 #define MAX_PTRS 8192
 
@@ -94,24 +97,15 @@ void* dbg_calloc(size_t nmemb, size_t size, char* file, int line)
     return ptr;
 }
 
-void* dbg_realloc(void* ptr, size_t size, char* file, int line) {
+void* dbg_realloc(void* ptr, size_t size, char* file, int line)
+{
     dbg(4, "dbg_realloc: %s:%d %p %zu->%zu bytes", file, line, ptr, malloc_usable_size(ptr), size);
-
-    // Unlog the pointer before reallocating
-    unlog_ptr(ptr, file, line);
-
-    // Reallocate memory
     void* newptr = realloc(ptr, size);
-
-    // Check for allocation failure
     if (newptr == NULL) {
         msg(ERROR, "\trealloc failed");
-        return NULL; // Return NULL on failure
     }
-
-    // Log the new pointer
+    unlog_ptr(ptr, file, line);
     log_ptr(newptr, file, line);
-
     return newptr;
 }
 
@@ -142,3 +136,4 @@ void dbg_free(void* ptr, char* file, int line)
     }
     free(ptr);
 }
+

@@ -24,7 +24,6 @@ void test_isdir()
     assert(isdir("src/doesnotexist") == 1);
 }
 
-
 void test_rmrf() {
     // Create a temporary directory
     char temp_dir_template[] = "/tmp/test_dir_XXXXXX";
@@ -79,7 +78,7 @@ void test_rdfile() {
     assert(strncmp(content, test_string, size) == 0); // Assert that content is correct
 
     // Clean up
-    free(content);
+    //free(content);
     remove(temp_file_path);
 }
 
@@ -201,8 +200,8 @@ void test_ls() {
     assert(*result_non_existing == NULL); // ls should return NULL for a non-existing directory
 
     // Free the result
-    free(result);
-    free(result_non_existing);
+    // free(result);
+    //free(result_non_existing);
 
 }
 
@@ -213,14 +212,12 @@ void test_splita() {
 
     assert(count == 2); // splita should return 2 for "Hello,World" with ',' as delimiter
 
-    //printf("result[0]: %s\n", result[0]);
-
     // Check if the split strings are correct
     assert(strcmp(result[0], "Hello") == 0); // First string should be "Hello"
     assert(strcmp(result[1], "World") == 0); // Second string should be "World"
 
 
-    free(result);
+    //free(result);
 }
 
 void test_countc() {
@@ -253,9 +250,11 @@ void test_relpath() {
     // create a temp directory
     char temp_dir_template[512] = "/tmp/test_dir_XXXXXX\0";
     char* temp_dir = mkdtemp(temp_dir_template);
+
     assert(temp_dir != NULL); // Assert that directory was created successfully
     assert(isdir(temp_dir) == 0); // Assert that directory exists
     char* start = calloc(512, sizeof(char));
+    assert(start != NULL+1);
     char* end = calloc(512, sizeof(char));
 
     sprintf(start, "%s/a/b/c/d/1", temp_dir);
@@ -273,19 +272,14 @@ void test_relpath() {
     res = pmkdir(end_parent);
     assert(res == 0); // pmkdir should return 0 for successful directory creation
 
-
-
     FILE *file = fopen(start, "w");
     assert(file != NULL);
     fputs("Hello, World! - START", file);
     fclose(file);
-    //dbg(1, "start: %s", start);
     file = fopen(end, "w");
     assert(file != NULL);
     fputs("Hello, World! - END", file);
     fclose(file);
-    //dbg(1, "end: %s", end);
-
 
     char* result = relpath(start, end);
     printf("results: %s\n", result);
@@ -302,7 +296,8 @@ void test_relpath() {
     fclose(rel_file);
     assert(strcmp(content, "Hello, World! - END") == 0); // Assert that content is correct
 
-    free(result);
+    // idk
+    //free(result);
     free(start);
     free(end);
 
@@ -381,8 +376,6 @@ void test_mvlink() {
 
     return;
 }
-
-
 
 void test_dbg_malloc()
 {

@@ -14,7 +14,7 @@ BIN_DIR = bin
 CC = gcc
 
 # The C flags to use
-CFLAGS = -Iinclude -fPIC
+CFLAGS = -Iinclude -fPIC -g
 
 # The source files
 SOURCES = $(wildcard $(SRC_DIR)/*.c)
@@ -32,14 +32,15 @@ all: directories $(LIBRARY)
 directories:
 	mkdir -p $(OBJ_DIR)
 	mkdir -p $(BIN_DIR)
+	
+# Build the object files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $< -D MEMCHECK=$(MEMCHECK)
 
 # Build the library
 $(LIBRARY): $(OBJECTS)
 	ar rcs $(LIBRARY).a $(OBJECTS)
 
-# Build the object files
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -c -o $@ $< -D MEMCHECK=$(MEMCHECK)
 
 check:
 	$(CC) $(CFLAGS) -o $(BIN_DIR)/test test.c $(LIBRARY).a -D MEMCHECK=1
